@@ -1,0 +1,209 @@
+<robot
+  name="twoarm_neck">
+  <link name="world">
+  </link>
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.144396264939993" />
+      <inertia
+        ixx="0.000143518614192769"
+        ixy="-3.10732239576783E-12"
+        ixz="-6.67605359934269E-06"
+        iyy="0.000155552709433615"
+        iyz="-3.29481748801136E-12"
+        izz="0.000258792041913219" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="two_arm_neck/neck1.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="two_arm_neck/neck1.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="link1">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.00558464092794276" />
+      <inertia
+        ixx="1.34906671319978E-06"
+        ixy="-6.75990848930974E-15"
+        ixz="-9.2900996309437E-10"
+        iyy="2.56110628664785E-06"
+        iyz="2.75193579105881E-11"
+        izz="2.08267318891963E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="two_arm_neck/neck2.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="two_arm_neck/neck2.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="link2">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.00558464092794276" />
+      <inertia
+        ixx="1.34906671319978E-06"
+        ixy="-6.75990848930974E-15"
+        ixz="-9.2900996309437E-10"
+        iyy="2.56110628664785E-06"
+        iyz="2.75193579105881E-11"
+        izz="2.08267318891963E-06" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="two_arm_neck/neck3.stl" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="two_arm_neck/neck3.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="tcp">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <mass
+        value="0.00558464092794276" />
+      <inertia
+        ixx="1.34906671319978E-06"
+        ixy="-6.75990848930974E-15"
+        ixz="-9.2900996309437E-10"
+        iyy="2.56110628664785E-06"
+        iyz="2.75193579105881E-11"
+        izz="2.08267318891963E-06" />
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+       <box size="0.01 0.01 0.01" />
+      </geometry>
+      <material name="blue">
+    <color rgba="0.0 0.0 0.8 1.0"/>
+  </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.01 0.01" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="world_fixed"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="world" />
+    <child
+      link="base_link" />
+    <axis
+      xyz="0 0 -1" />
+  </joint>
+  <joint
+    name="joint1"
+    type="continuous">
+    <origin
+      xyz="0 0 0.06290"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="link1" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+  <joint
+    name="joint2"
+    type="continuous">
+    <origin
+      xyz="0 0 0.035"
+      rpy="0 0 0" />
+    <parent
+      link="link1" />
+    <child
+      link="link2" />
+    <axis
+      xyz="0 -1 0" />
+  </joint>
+  <joint
+    name="joint3"
+    type="continuous">
+    <origin
+      xyz="-0.08867 0.02840 0.04790"
+      rpy="0 0 0" />
+    <parent
+      link="link2" />
+    <child
+      link="tcp" />
+    <axis
+      xyz="0 -1 0" />
+  </joint>
+</robot>

@@ -11,7 +11,7 @@ def center_p(conners,depth_img):
 		for conner_p in conner:
 			x,y = int(np.mean(conner_p[:,0])*576/720),int(np.mean(conner_p[:,1])/2)
 			print(x,y)
-			print(depth_img[x,y]*1000)
+			print(depth_img[x,y]*1000.0)
 
 			#print(np.mean(conner[,0]))
 def main():
@@ -22,18 +22,24 @@ def main():
 		capture = k4a.get_capture()
 		img_color = capture.color
 		depth_img = capture.depth
+		depth_img = np.array(depth_img,dtype=float)/65535.0*255
+		depth_img = np.array(depth_img,dtype=np.uint8)
 		print(depth_img.shape)
 		print(img_color.shape)
 		frame = img_color[:, :, 2::-1]
 		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
 		aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
 		parameters =  aruco.DetectorParameters_create()
 		corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
-		print(corners,ids)
-		depth_img = depth_img /10000
+		print(np.mean(depth_img))
+		#print(corners,ids)
+		#depth_img = depth_img /10000
 		center_p(corners, depth_img)
 		gray = aruco.drawDetectedMarkers(gray, corners)
-		cv2.imshow('frame',depth_img /10000)
+		depth_img_jet = cv2.applyColorMap(depth_img*10, cv2.COLORMAP_JET)
+
+		cv2.imshow('frame',depth_img_jet)
 		#cv2.imshow('frame2',depth_img/8.0)
 		if cv2.waitKey(1) & 0xFF == ord('s'):
 			cv2.imwrite("cam_cal_img/"+str(img_num) + "cal.png", gray)
@@ -41,5 +47,6 @@ def main():
 		if cv2.waitKey(10) & 0xFF == ord('q'):
 			cv2.destroyAllWindows()
 			break
+	k4a.close()		
 #if __name__ =='__main__':
 main()

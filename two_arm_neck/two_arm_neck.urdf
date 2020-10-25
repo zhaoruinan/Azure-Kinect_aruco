@@ -1,0 +1,127 @@
+<robot name="twoarm_neck">
+<link name="world">
+</link>
+
+<joint name="world_fixed" type="fixed">
+<origin rpy="0 0 0" xyz="0 0 0"/>
+<parent link="world"/>
+    <child link="link0"/>
+</joint>
+
+<link name="link0">
+ <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1.59306955" />
+      <inertia ixx="+0.00572623" iyy="+0.00558959" izz="+0.00966674" ixy="+0.00000251" iyz="-0.00000014" ixz="-0.00011380"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="two_arm_neck/neck1.stl"/>
+      </geometry>
+      <material name="metal_grey"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="two_arm_neck/neck1.stl"/>
+      </geometry>
+    </collision>
+</link>
+
+<joint name="joint1" type="continuous">
+    <parent link="link0"/>
+    <child link="link1"/>
+    <origin xyz = "0 0 0.06290" rpy = "0 0 0"/>
+    <axis xyz = "0 0 1"/>
+       <!--<limit effort="300" lower="-3.054325556" upper="3.054325556" velocity="10"/>
+    <dynamics damping="0.5"/>-->
+</joint>
+
+<link name="link1">
+ <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1.59306955" />
+      <inertia ixx="+0.00572623" iyy="+0.00558959" izz="+0.00966674" ixy="+0.00000251" iyz="-0.00000014" ixz="-0.00011380"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="two_arm_neck/neck2.stl"/>
+      </geometry>
+      <material name="metal_grey"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="two_arm_neck/neck2.stl"/>
+      </geometry>
+    </collision>
+</link>
+
+<joint name="joint2" type="continuous">
+    <parent link="link1"/>
+    <child link="link2"/>
+    <origin xyz = "0 0 0.035" rpy = "0 0 0"/>
+    <axis xyz = "0 -1 0"/>
+       <!--<limit effort="300" lower="-3.054325556" upper="3.054325556" velocity="10"/>
+    <dynamics damping="0.5"/>-->
+</joint>
+
+
+<link name="link2">
+ <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1.59306955" />
+      <inertia ixx="+0.00572623" iyy="+0.00558959" izz="+0.00966674" ixy="+0.00000251" iyz="-0.00000014" ixz="-0.00011380"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="two_arm_neck/neck3.stl"/>
+      </geometry>
+      <material name="metal_grey"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="two_arm_neck/neck3.stl"/>
+      </geometry>
+    </collision>
+</link>
+
+<joint name="joint3" type="continuous">
+    <parent link="link2"/>
+    <child link="tcp"/>
+    <origin xyz = "-0.08867 0.02840 0.04790" rpy = "0 0 0"/>
+    <axis xyz = "0 -1 0"/>
+       <!--<limit effort="300" lower="-3.054325556" upper="3.054325556" velocity="10"/>
+    <dynamics damping="0.5"/>-->
+</joint>
+
+<link name="tcp">
+ <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1.59306955" />
+      <inertia ixx="+0.00572623" iyy="+0.00558959" izz="+0.00966674" ixy="+0.00000251" iyz="-0.00000014" ixz="-0.00011380"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+       <box size="0.01 0.01 0.01" />
+      </geometry>
+      <material name="blue">
+    <color rgba="0.0 0.0 0.8 1.0"/>
+  </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.01 0.01" />
+      </geometry>
+    </collision>
+</link>
+
+</robot>
+
+
