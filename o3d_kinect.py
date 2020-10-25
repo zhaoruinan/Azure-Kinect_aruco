@@ -14,8 +14,9 @@ def center_p(conners,depth_img):
                 #print(p[0],p[1],depth[p[1],p[0]])
                 d.append(depth[p[1],p[0]])
             print(d)
+            d.append(depth_img[y,x])
             #print(depth_img[conner_p])
-            print(depth_img[y,x])
+            print(max(d))
 
 class ViewerWithCallback:
     def __init__(self, config, device, align_depth_to_color):

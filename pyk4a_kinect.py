@@ -33,6 +33,7 @@ def main():
 		parameters =  aruco.DetectorParameters_create()
 		corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
 		print(np.mean(depth_img))
+		print(ids)
 		#print(corners,ids)
 		#depth_img = depth_img /10000
 		center_p(corners, depth_img)
