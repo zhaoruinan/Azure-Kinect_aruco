@@ -11,7 +11,7 @@ import sys, time
 import threading
 import keyboard
 import numpy as np
-
+from threading import Timer
 from bledevice import scanble, BLEDevice
 Device1 = BLEDevice("DD:43:89:16:43:81") #right wheel
 Device2 = BLEDevice("F4:82:B3:50:ED:55") #left  wheel
@@ -362,7 +362,8 @@ def center_p(conners,depth_img):
 			print(depth_img[y,x])
 
 			#print(np.mean(conner[,0]))
-def wheel_com():
+def wheel_com_init():
+
 
 	desired_speed1(10)
 	desired_speed2(10)
@@ -370,8 +371,27 @@ def wheel_com():
 	time.sleep(2)
 	desired_speed1(0)
 	desired_speed2(0)
+	global state
+	state = STOP
 
-	while 1:
+
+def wheel_com():
+
+	global time_stamp1
+	time_stamp1=datetime.now()
+	global time_stamp2
+	time_stamp2=datetime.now()
+	#state = STOP
+	global state
+
+	if 1:
+	#while 1:
+		
+		time_stamp1 = datetime.now()
+		print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+		print("wheel control")
+		exectime1 = time_stamp1 - time_stamp2
+		print(exectime1.total_seconds())
 		
 		if state == STOP:
 			M_STOP()
@@ -392,22 +412,27 @@ def wheel_com():
 
 
 
-			
+		time_stamp2 = time_stamp1
 		print(state,direction1,direction2)
-		time.sleep(0.5)
+		#time.sleep(0.5)
+
 	
 
     #print("hhh")
-def aruco_fun():
+def aruco_init():
+	global pipe
 	cap = cv2.VideoCapture(0)
 	pipe = rs.pipeline()
 	config = rs.config()
 	config.enable_stream(rs.stream.color, 640, 480, rs.format.rgb8, 30)
 	config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 	profile = pipe.start(config)
+def aruco_fun():
+	global pipe
 	axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
 	size_of_marker =  0.0145 # side lenght of the marker in meter
-	while(True):
+	if True:
+	#while(True):
 		time.sleep(0.5)
 		start = datetime.now()
 		frames = pipe.wait_for_frames()
@@ -428,16 +453,27 @@ def aruco_fun():
 		cv2.imshow('frame',frame_markers)
 		end = datetime.now()
 		exec_time = end - start
-		print(exec_time,exec_time.total_seconds())
+		#print("aruco control")
+		#print(exec_time,exec_time.total_seconds())
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			cv2.destroyAllWindows()
-			break
-
+			#break
+class RepeatingTimer(Timer): 
+    def run(self):
+        while not self.finished.is_set():
+            self.function(*self.args, **self.kwargs)
+            self.finished.wait(self.interval)
 def main():
-    t_wheel = threading.Thread(target=wheel_com)
-    t_wheel.start()
-    t_aruco = threading.Thread(target=aruco_fun)
-    t_aruco.start()
+	aruco_init()
+	wheel_com_init()
+	t_aruco = RepeatingTimer(0.03, aruco_fun)
+	t_aruco.start()
+	t_wheel = RepeatingTimer(0.125, wheel_com)
+	t_wheel.start()
+    #t_wheel = threading.Thread(target=wheel_com)
+    #t_wheel.start()
+    #t_aruco = threading.Thread(target=aruco_fun)
+    #t_aruco.start()
 
 
 #if __name__ =='__main__':
