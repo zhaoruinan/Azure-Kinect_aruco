@@ -6,7 +6,7 @@ import time
 import pyrealsense2 as rs
 import copy
 import threading
-
+from datetime import datetime
 import sys, time
 import threading
 import keyboard
@@ -214,6 +214,7 @@ def M_FWD():
 	state = IDLE
 
 def M_BWD():
+	start = datetime.now()
 	global now_velocity1
 	global now_velocity2
 	global direction1
@@ -232,6 +233,9 @@ def M_BWD():
 	desired_speed1(int(now_velocity1));
 	desired_speed2(int(now_velocity2));
 	state = IDLE
+	end = datetime.now()
+	exec_time = end - start
+	print("blueteeth time",exec_time,exec_time.total_seconds())
 
 def M_ROTATE_LEFT():
 	global now_velocity1
@@ -405,6 +409,7 @@ def aruco_fun():
 	size_of_marker =  0.0145 # side lenght of the marker in meter
 	while(True):
 		time.sleep(0.5)
+		start = datetime.now()
 		frames = pipe.wait_for_frames()
 		align_to = rs.stream.color
 		align = rs.align(align_to)
@@ -421,6 +426,9 @@ def aruco_fun():
 		corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
 		frame_markers = aruco.drawDetectedMarkers(frame.copy(), corners, ids)
 		cv2.imshow('frame',frame_markers)
+		end = datetime.now()
+		exec_time = end - start
+		print(exec_time,exec_time.total_seconds())
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			cv2.destroyAllWindows()
 			break
