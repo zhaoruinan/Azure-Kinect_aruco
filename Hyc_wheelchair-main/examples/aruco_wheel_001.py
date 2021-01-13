@@ -29,7 +29,7 @@ ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_6X6_250)
 board = aruco.GridBoard_create(
 		markersX=1,
 		markersY=1,
-		markerLength=0.09,
+		markerLength=0.06,
 		markerSeparation=0.01,
 		dictionary=ARUCO_DICT)
 
@@ -390,11 +390,11 @@ def tcp_com():
 	memmove( write_buffer, send_data.byte,1024)
 
 	send_data.float63dArr[5]=random.uniform(0, 1)
-	print(send_data.float63dArr[5])
+	#print(send_data.float63dArr[5])
 	send_data.int7Arr[0]=random.randrange(1,100)
 	client.sendall(write_buffer)
 	end = datetime.now()
-	print(write_buffer[:50])
+	#print(write_buffer[:50])
 	#res = [ord(sub) for sub in  write_buffer[:50]] 
 	#print(res)
     #send_data.int7Arr[1]=100
@@ -411,7 +411,7 @@ def tcp_com():
     #res = [ord(sub) for sub in  write_buffer[:50]] 
     #print(res)
 	#'''
-	print("hhhhh")
+
 
 
 def wheel_com_init():
@@ -483,7 +483,7 @@ def wheel_com():
 
     #print("hhh")
 def aruco_init():
-	global pipe, cameraMatrix, distCoeffs
+	global pipe, cameraMatrix, distCoeffs, find_wheel_chair
 	cap = cv2.VideoCapture(0)
 	pipe = rs.pipeline()
 	config = rs.config()
@@ -492,18 +492,18 @@ def aruco_init():
 	profile = pipe.start(config)
 	cameraMatrix = np.load('mtx.npy')
 	distCoeffs = np.load('dist.npy')
+	find_wheel_chair = 0
 def process_data(ids,rotation_mat):
 	global send_data
 	for i in range(3):
 		for j in range(3):
 			index = 10+ids*9+i*3+j
-			send_data.double6dArr[index] = rotation_mat[i,j]
+			#send_data.double6dArr[index] = rotation_mat[i,j]
 
 	#send_data.double6dArr[10]=rotation_mat(0, 1)
 def aruco_fun():
 	global pipe, cameraMatrix, distCoeffs
 	axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
-	size_of_marker =  0.0145 # side lenght of the marker in meter
 	if True:
 	#while(True):
 		frames = pipe.wait_for_frames()
@@ -526,36 +526,42 @@ def aruco_fun():
 		if ids is not None and len(ids) > 0:
 			# Estimate the posture per each Aruco marker
 			rotation_vectors, translation_vectors, _objPoints = aruco.estimatePoseSingleMarkers(corners, 1, cameraMatrix, distCoeffs)
-			print("rotation_vectors",rotation_vectors.shape,translation_vectors)
-			print("translation_vectors",translation_vectors.shape,translation_vectors)
-			ids = 1
 			global wheel_chair_rotation_vectors,  wheel_chair_translation_vectors, find_wheel_chair ,w2c
-			find_wheel_chair = 0
-			for id_obj in range(len(ids)):
-				if ids[id_obj] == 7:
+			print("len",len(ids[0]))
+			num = int(len(ids))
+			for id_obj in range(num):
+
+				if ids[id_obj] == 6:
 					find_wheel_chair = 1
 					wheel_chair_rotation_vectors =cv2.Rodrigues( rotation_vectors[id_obj][0])[0]
 					wheel_chair_translation_vectors = rotation_vectors[id_obj]
-					c2w = numpy.allclose([wheel_chair_rotation_vectors,wheel_chair_translation_vectors.T],[0,0,0,1])
-					w2c = np.linalg.inv(c2w) 
-
-				elif find_wheel_chair == 0:
-					break
-				else:
+					c2w = np.c_[wheel_chair_rotation_vectors,wheel_chair_translation_vectors[0]]
+					temp = np.array([0,0,0,1])
+					c2w = np.r_[c2w, [temp]]
+					#w2c = np.linalg.inv(c2w) 
+					w2c = np.c_[wheel_chair_rotation_vectors.T,-wheel_chair_rotation_vectors.T.dot(wheel_chair_translation_vectors[0])]
+					w2c = np.r_[w2c, [temp]]
+				elif ids[id_obj]!=6:
+					if find_wheel_chair == 0:
+						continue
 					obj_rotation_vectors =cv2.Rodrigues( rotation_vectors[id_obj][0])[0]
 					obj_translation_vectors = rotation_vectors[id_obj]
-					c2o = numpy.allclose([obj_rotation_vectors,obj_translation_vectors.T],[0,0,0,1])
-					w2o = w2c * c2o
-					p = w2o[:,3][:2]
-					print(p)
+					c2o = np.c_[obj_rotation_vectors,obj_translation_vectors[0]]
+
+					temp = np.array([0,0,0,1])
+					c2o = np.r_[c2o, [temp]]					
+					w2o = w2c.dot(c2o)
+					p = w2o[:,3][:3]
+					print(ids[id_obj]," ","postion vetor is",p)
+					#process_data(ids[id_obj],p)
+				
+			ids = 1
 
 			for rvec in rotation_vectors:
 				rotation_mat = cv2.Rodrigues(rvec[0])[0]
-				print("ids:",ids,rotation_mat)
 				ids = ids+1
-				process_data(ids,rotation_mat)
-			#rotation_mat = cv2.Rodrigues(rotation_vectors)
-			#print(rotation_mat)
+				
+
 			for rvec, tvec in zip(rotation_vectors, translation_vectors):
 				if len(sys.argv) == 2 and sys.argv[1] == 'cube':
 					try:
@@ -583,13 +589,13 @@ class RepeatingTimer(Timer):
 def main():
 
 	tcp_init()
-	t_tcp = RepeatingTimer(0.3, tcp_com)
+	t_tcp = RepeatingTimer(0.03, tcp_com)
 	t_tcp.start()
 
-	#aruco_init()
+	aruco_init()
 	#wheel_com_init()
-	#t_aruco = RepeatingTimer(0.03, aruco_fun)
-	#t_aruco.start()
+	t_aruco = RepeatingTimer(0.2, aruco_fun)
+	t_aruco.start()
 	#t_wheel = RepeatingTimer(0.125, wheel_com)
 	#t_wheel.start()
     #t_wheel = threading.Thread(target=wheel_com)
