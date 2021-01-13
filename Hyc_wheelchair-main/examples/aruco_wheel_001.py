@@ -529,6 +529,26 @@ def aruco_fun():
 			print("rotation_vectors",rotation_vectors.shape,translation_vectors)
 			print("translation_vectors",translation_vectors.shape,translation_vectors)
 			ids = 1
+			global wheel_chair_rotation_vectors,  wheel_chair_translation_vectors, find_wheel_chair ,w2c
+			find_wheel_chair = 0
+			for id_obj in range(len(ids)):
+				if ids[id_obj] == 7:
+					find_wheel_chair = 1
+					wheel_chair_rotation_vectors =cv2.Rodrigues( rotation_vectors[id_obj][0])[0]
+					wheel_chair_translation_vectors = rotation_vectors[id_obj]
+					c2w = numpy.allclose([wheel_chair_rotation_vectors,wheel_chair_translation_vectors.T],[0,0,0,1])
+					w2c = np.linalg.inv(c2w) 
+
+				elif find_wheel_chair == 0:
+					break
+				else:
+					obj_rotation_vectors =cv2.Rodrigues( rotation_vectors[id_obj][0])[0]
+					obj_translation_vectors = rotation_vectors[id_obj]
+					c2o = numpy.allclose([obj_rotation_vectors,obj_translation_vectors.T],[0,0,0,1])
+					w2o = w2c * c2o
+					p = w2o[:,3][:2]
+					print(p)
+
 			for rvec in rotation_vectors:
 				rotation_mat = cv2.Rodrigues(rvec[0])[0]
 				print("ids:",ids,rotation_mat)
