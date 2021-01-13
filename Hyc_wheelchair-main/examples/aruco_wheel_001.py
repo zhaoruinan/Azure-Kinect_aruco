@@ -2,27 +2,38 @@ import numpy as np
 import cv2
 import cv2.aruco as aruco
 #from aruco_lib import *
-import time
 import pyrealsense2 as rs
 import copy
 import threading
 from datetime import datetime
 import sys, time
-import threading
 import keyboard
-import numpy as np
 from threading import Timer
 from bledevice import scanble, BLEDevice
-Device1 = BLEDevice("DD:43:89:16:43:81") #right wheel
-Device2 = BLEDevice("F4:82:B3:50:ED:55") #left  wheel
-Device1.writereq(0xd,'54524F5F0D0A') #RUN_flag
-Device1.notify()
-Device2.writereq(0xd,'54524F5F0D0A') #RUN_flag
-Device2.notify()
-Device1.writereq(0xd,'544443790D0A') #FRONT
-Device1.notify()
-Device2.writereq(0xd,'544443790D0A') #FRONT
-Device2.notify()
+import socket
+import struct
+import random
+from datetime import datetime
+from ctypes import *
+SIZE_DATA_TCP_MAX  = 200
+class Data(Union):
+    _fields_ = [("byte", c_ubyte * SIZE_DATA_TCP_MAX),("int7Arr", c_int * 7),("double6dArr", c_double * 63)]
+
+write_buffer = (c_char* 1024)()  
+
+#HOST = '192.168.50.4'  # The server's hostname or IP address
+HOST = "127.0.0.1"
+PORT = 9911		# The port used by the server
+ARUCO_PARAMETERS = aruco.DetectorParameters_create()
+ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_6X6_250)
+board = aruco.GridBoard_create(
+		markersX=1,
+		markersY=1,
+		markerLength=0.09,
+		markerSeparation=0.01,
+		dictionary=ARUCO_DICT)
+
+
 desired = 0
 flag = 1;
 now_velocity1 = 0
@@ -362,7 +373,57 @@ def center_p(conners,depth_img):
 			print(depth_img[y,x])
 
 			#print(np.mean(conner[,0]))
+
+def tcp_init():
+	global client, send_data
+	client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	server_address = (HOST, PORT)
+	client.connect(server_address)
+	send_data = Data()
+def tcp_com():
+
+	#'''
+	global client
+	global send_data
+	start = datetime.now()
+	send_data.int7Arr[0]=random.randrange(1,100)
+	memmove( write_buffer, send_data.byte,1024)
+	client.sendall(write_buffer)
+	send_data.double6dArr[0]=random.uniform(0, 1)
+	send_data.int7Arr[0]=random.randrange(1,100)
+	end = datetime.now()
+	print(write_buffer[:50])
+	#res = [ord(sub) for sub in  write_buffer[:50]] 
+	#print(res)
+    #send_data.int7Arr[1]=100
+    #send_data.double6dArr[0]=3.3
+    #memmove( write_buffer, send_data.byte,1024)
+    #client.sendall(write_buffer)
+    #end = datetime.now()
+    #exec_time = end - start
+    #print(send_data.double6dArr[0])
+    #print(end)
+    #print(exec_time,exec_time.total_seconds())
+    #time.sleep(0.2-exec_time.total_seconds())
+    #read_buffer = s.recv(1024)
+    #res = [ord(sub) for sub in  write_buffer[:50]] 
+    #print(res)
+	#'''
+	print("hhhhh")
+
+
 def wheel_com_init():
+	global Device1, Device2
+	Device1 = BLEDevice("DD:43:89:16:43:81") #right wheel
+	Device2 = BLEDevice("F4:82:B3:50:ED:55") #left  wheel
+	Device1.writereq(0xd,'54524F5F0D0A') #RUN_flag
+	Device1.notify()
+	Device2.writereq(0xd,'54524F5F0D0A') #RUN_flag
+	Device2.notify()
+	Device1.writereq(0xd,'544443790D0A') #FRONT
+	Device1.notify()
+	Device2.writereq(0xd,'544443790D0A') #FRONT
+	Device2.notify()
 
 
 	desired_speed1(10)
@@ -420,61 +481,98 @@ def wheel_com():
 
     #print("hhh")
 def aruco_init():
-	global pipe
+	global pipe, cameraMatrix, distCoeffs
 	cap = cv2.VideoCapture(0)
 	pipe = rs.pipeline()
 	config = rs.config()
 	config.enable_stream(rs.stream.color, 640, 480, rs.format.rgb8, 30)
 	config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 	profile = pipe.start(config)
+	cameraMatrix = np.load('mtx.npy')
+	distCoeffs = np.load('dist.npy')
+def process_data(ids,rotation_mat):
+	global send_data
+	for i in range(3):
+		for j in range(3):
+			index = 10+ids*9+i*3+j
+			send_data.double6dArr[index] = rotation_mat[i,j]
+
+	#send_data.double6dArr[10]=rotation_mat(0, 1)
 def aruco_fun():
-	global pipe
+	global pipe, cameraMatrix, distCoeffs
 	axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
 	size_of_marker =  0.0145 # side lenght of the marker in meter
 	if True:
 	#while(True):
-		time.sleep(0.5)
-		start = datetime.now()
 		frames = pipe.wait_for_frames()
-		align_to = rs.stream.color
-		align = rs.align(align_to)
-		aligned_frames = align.process(frames)
-		depth_frame = aligned_frames.get_depth_frame()
-		color_frame = aligned_frames.get_color_frame()
-		color_img = np.array(color_frame.get_data())
-		color_img_temp = copy.deepcopy(color_img)
-		depth_img = np.array(depth_frame.get_data())
-		frame = color_img_temp 
-		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
-		parameters =  aruco.DetectorParameters_create()
-		corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
-		frame_markers = aruco.drawDetectedMarkers(frame.copy(), corners, ids)
-		cv2.imshow('frame',frame_markers)
-		end = datetime.now()
-		exec_time = end - start
+		color_frame = frames.get_color_frame()
+		# Convert images to numpy arrays
+		color_image = np.asanyarray(color_frame.get_data())
+		gray = cv2.cvtColor(color_image.copy(), cv2.COLOR_RGB2GRAY)
+		corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, ARUCO_DICT, parameters=ARUCO_PARAMETERS)
+		corners, ids, rejectedImgPoints, recoveredIds = aruco.refineDetectedMarkers(
+				image = gray,
+				board = board,
+				detectedCorners = corners,
+				detectedIds = ids,
+				rejectedCorners = rejectedImgPoints,
+				cameraMatrix = cameraMatrix,
+				distCoeffs = distCoeffs)
+		ProjectImage = color_image.copy()
+		ProjectImage = aruco.drawDetectedMarkers(ProjectImage, corners, borderColor=(0, 0, 255))
+		print(ids)
+		if ids is not None and len(ids) > 0:
+			# Estimate the posture per each Aruco marker
+			rotation_vectors, translation_vectors, _objPoints = aruco.estimatePoseSingleMarkers(corners, 1, cameraMatrix, distCoeffs)
+			print(rotation_vectors.shape)
+			ids = 1
+			for rvec in rotation_vectors:
+				rotation_mat = cv2.Rodrigues(rvec[0])[0]
+				print("ids:",ids,rotation_mat)
+				ids = ids+1
+				process_data(ids,rotation_mat)
+			#rotation_mat = cv2.Rodrigues(rotation_vectors)
+			#print(rotation_mat)
+			for rvec, tvec in zip(rotation_vectors, translation_vectors):
+				if len(sys.argv) == 2 and sys.argv[1] == 'cube':
+					try:
+						imgpts, jac = cv2.projectPoints(axis, rvec, tvec, cameraMatrix, distCoeffs)
+						ProjectImage = drawCube(ProjectImage, corners, imgpts)
+					except:
+						continue
+				else:    
+					ProjectImage = aruco.drawAxis(ProjectImage, cameraMatrix, distCoeffs, rvec, tvec, 1)
+		cv2.imshow('ProjectImage', ProjectImage)
+		#frame_markers = aruco.drawDetectedMarkers(frame.copy(), corners, ids)
+		#cv2.imshow('frame',frame_markers)
+		#end = datetime.now()
+		#exec_time = end - start
 		#print("aruco control")
 		#print(exec_time,exec_time.total_seconds())
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			cv2.destroyAllWindows()
 			#break
 class RepeatingTimer(Timer): 
-    def run(self):
-        while not self.finished.is_set():
-            self.function(*self.args, **self.kwargs)
-            self.finished.wait(self.interval)
+	def run(self):
+		while not self.finished.is_set():
+			self.function(*self.args, **self.kwargs)
+			self.finished.wait(self.interval)
 def main():
+
+	tcp_init()
+	t_tcp = RepeatingTimer(0.3, tcp_com)
+	t_tcp.start()
+
 	aruco_init()
-	wheel_com_init()
+	#wheel_com_init()
 	t_aruco = RepeatingTimer(0.03, aruco_fun)
 	t_aruco.start()
-	t_wheel = RepeatingTimer(0.125, wheel_com)
-	t_wheel.start()
+	#t_wheel = RepeatingTimer(0.125, wheel_com)
+	#t_wheel.start()
     #t_wheel = threading.Thread(target=wheel_com)
     #t_wheel.start()
     #t_aruco = threading.Thread(target=aruco_fun)
     #t_aruco.start()
-
 
 #if __name__ =='__main__':
 main()
