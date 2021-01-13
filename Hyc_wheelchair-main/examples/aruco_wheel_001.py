@@ -17,7 +17,7 @@ from datetime import datetime
 from ctypes import *
 SIZE_DATA_TCP_MAX  = 200
 class Data(Union):
-    _fields_ = [("byte", c_ubyte * SIZE_DATA_TCP_MAX),("int7Arr", c_int * 7),("double6dArr", c_double * 63)]
+    _fields_ = [("byte", c_ubyte * SIZE_DATA_TCP_MAX),("int7Arr", c_int * 7),("float63dArr", c_float * 63)]
 
 write_buffer = (c_char* 1024)()  
 
@@ -388,9 +388,11 @@ def tcp_com():
 	start = datetime.now()
 	send_data.int7Arr[0]=random.randrange(1,100)
 	memmove( write_buffer, send_data.byte,1024)
-	client.sendall(write_buffer)
-	send_data.double6dArr[0]=random.uniform(0, 1)
+
+	send_data.float63dArr[5]=random.uniform(0, 1)
+	print(send_data.float63dArr[5])
 	send_data.int7Arr[0]=random.randrange(1,100)
+	client.sendall(write_buffer)
 	end = datetime.now()
 	print(write_buffer[:50])
 	#res = [ord(sub) for sub in  write_buffer[:50]] 
@@ -524,7 +526,8 @@ def aruco_fun():
 		if ids is not None and len(ids) > 0:
 			# Estimate the posture per each Aruco marker
 			rotation_vectors, translation_vectors, _objPoints = aruco.estimatePoseSingleMarkers(corners, 1, cameraMatrix, distCoeffs)
-			print(rotation_vectors.shape)
+			print("rotation_vectors",rotation_vectors.shape,translation_vectors)
+			print("translation_vectors",translation_vectors.shape,translation_vectors)
 			ids = 1
 			for rvec in rotation_vectors:
 				rotation_mat = cv2.Rodrigues(rvec[0])[0]
@@ -563,10 +566,10 @@ def main():
 	t_tcp = RepeatingTimer(0.3, tcp_com)
 	t_tcp.start()
 
-	aruco_init()
+	#aruco_init()
 	#wheel_com_init()
-	t_aruco = RepeatingTimer(0.03, aruco_fun)
-	t_aruco.start()
+	#t_aruco = RepeatingTimer(0.03, aruco_fun)
+	#t_aruco.start()
 	#t_wheel = RepeatingTimer(0.125, wheel_com)
 	#t_wheel.start()
     #t_wheel = threading.Thread(target=wheel_com)

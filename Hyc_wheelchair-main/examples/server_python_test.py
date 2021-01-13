@@ -9,7 +9,8 @@ PORT = 9911        # Port to listen on (non-privileged ports are > 1023)
 SIZE_DATA_ASCII_MAX = 32
 SIZE_DATA_TCP_MAX  = 200
 class Data(Union):
-    _fields_ = [("byte", c_ubyte * SIZE_DATA_TCP_MAX),("double6dArr", c_double * 6),("bool", c_bool * 8)]
+    _fields_ = [("byte", c_ubyte * SIZE_DATA_TCP_MAX),("int7Arr", c_int * 7),("float63dArr", c_float * 63)]
+
 #from motor_can import motor_set_speed,motor_set_speed_m,motor_read_pos
 def server():
     write_buffer = (c_char* 1024)()
@@ -26,18 +27,18 @@ def server():
                 read_buffer = conn.recv(1024)
                 #if not read_buffer:
                 #    break
-                print('send data  ',send_data.double6dArr[5])
+                #print('send data  ',send_data.double6dArr[5])
                 memmove(res_data.byte, read_buffer, 1024)
-                print('receive data  ',res_data.double6dArr[5])
-                print('speed1  ',res_data.double6dArr[0])
-                print('speed2 ',res_data.double6dArr[1])                
-                print("server",datetime.fromtimestamp(time.time()))                                
+                print('receive data  ',res_data.float63dArr[5])
+                #print('speed1  ',res_data.double6dArr[0])
+                #print('speed2 ',res_data.double6dArr[1])                
+                #print("server",datetime.fromtimestamp(time.time()))                                
                 #motor_set_speed,motor_set_speed_m
                 #motor_read_pos
-                send_data.double6dArr[5] =0.002 +send_data.double6dArr[5]
+                #send_data.double6dArr[5] =0.002 +send_data.double6dArr[5]
                 memmove( write_buffer,send_data.byte ,1024)
-                print('send data  ',send_data.double6dArr[5])
-                conn.sendall(write_buffer)
+                #print('send data  ',send_data.double6dArr[5])
+                #conn.sendall(write_buffer)
                 time.sleep(0.2)      
 
 def int_to_char(n):
@@ -101,19 +102,19 @@ class motor:
         
 class MyApp(wx.App):
     def OnInit(self):
-        frame = wx.Frame(parent = None,title = 'wxPython',size = (280,360))
+        frame = wx.Frame(parent = None,title = 'wxPython',size = (280,560))
         panel = wx.Panel(frame, -1)
         self.speed1, speed3 = 0,0
-        self.button1 = wx.Button(panel,-1,'Stop1',pos = (30,80))
-        self.button2 = wx.Button(panel,-1,'move1',pos = (30,120))
-        self.button3 = wx.Button(panel,-1,'move1-',pos = (30,40))
+        self.button1 = wx.Button(panel,-1,'Stop',pos = (30,80))
+        self.button2 = wx.Button(panel,-1,'BWD',pos = (30,120))
+        self.button3 = wx.Button(panel,-1,'FWD',pos = (30,40))
         self.Bind(wx.EVT_BUTTON, self.OnButton1,self.button1)
         self.Bind(wx.EVT_BUTTON, self.OnButton2,self.button2)
         self.Bind(wx.EVT_BUTTON, self.OnButton3,self.button3)
         
-        self.button1_1 = wx.Button(panel,-1,'Stop2',pos = (150,80))
-        self.button2_1 = wx.Button(panel,-1,'move2+',pos = (150,120))
-        self.button3_1 = wx.Button(panel,-1,'move2-',pos = (150,40))
+        self.button1_1 = wx.Button(panel,-1,'speed up',pos = (150,80))
+        self.button2_1 = wx.Button(panel,-1,'turn left',pos = (150,120))
+        self.button3_1 = wx.Button(panel,-1,'turn right',pos = (150,40))
         self.Bind(wx.EVT_BUTTON, self.OnButton1_1,self.button1_1)
         self.Bind(wx.EVT_BUTTON, self.OnButton2_1,self.button2_1)
         self.Bind(wx.EVT_BUTTON, self.OnButton3_1,self.button3_1)
@@ -130,10 +131,13 @@ class MyApp(wx.App):
         self.label4 = wx.StaticText(panel,-1, "Pos(0.01rad)",pos = (150,210))
         self.text4 = wx.TextCtrl(panel, -1,pos = (150,230),size = (80,-1),style = wx.TE_READONLY)
 
-        self.update_button = wx.Button(panel,-1,'update',pos = (30,270))
+        self.update_button = wx.Button(panel,-1,'task_go',pos = (30,270))
         self.Bind(wx.EVT_BUTTON, self.OnUpdate,self.update_button)
         self.text1.SetValue('0')
         self.text2.SetValue('0')
+        self.label3 = wx.StaticText(panel,-1, "TCP Data",pos = (30,300))
+        self.text3 = wx.TextCtrl(panel, -1,pos = (30,330),size = (200,150),style = wx.TE_READONLY)
+
         frame.Show()
         return True
     def OnButton1(self, event):
