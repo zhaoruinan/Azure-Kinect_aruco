@@ -483,6 +483,8 @@ def aruco_init():
 	config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 	profile = pipe.start(config)
 	cameraMatrix = np.load('mtx.npy')
+	depth_profile = rs.video_stream_profile(profile.get_stream(rs.stream.depth))
+	depth_intrinsics = depth_profile.get_intrinsics()
 	distCoeffs = np.load('dist.npy')
 	find_wheel_chair = 0
 def process_data(ids,rotation_mat):
