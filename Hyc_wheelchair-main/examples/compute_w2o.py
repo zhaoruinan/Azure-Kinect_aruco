@@ -1,9 +1,17 @@
 import numpy as np
-def get_xyz(conner,depth_img,cameraMatrix):
+def get_xyz(conner,depth_img,cameraMatrix,depth_intrinsics):
     camera_fx = cameraMatrix[0][0]
     camera_fy = cameraMatrix[1][1]
     camera_cx = cameraMatrix[0][2]
     camera_cy = cameraMatrix[1][2]
+    #camera_cx = 324.431
+    #camera_cy = 240.47
+    #camera_fx = 381.331
+    #camera_fy = 381.333 
+    camera_cx = 340.745
+    camera_cy = 245.132
+    camera_fx = 615.376
+    camera_fy = 614.775
     conner_p = conner[0]
     n,m = int(np.mean(conner_p[:,0])),int(np.mean(conner_p[:,1]))
     z = depth_img[m,n]/1000.0

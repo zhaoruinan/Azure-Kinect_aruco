@@ -475,7 +475,7 @@ def wheel_com():
 
     #print("hhh")
 def aruco_init():
-	global pipe, cameraMatrix, distCoeffs, find_wheel_chair
+	global pipe, cameraMatrix, distCoeffs, find_wheel_chair,depth_intrinsics
 	cap = cv2.VideoCapture(0)
 	pipe = rs.pipeline()
 	config = rs.config()
@@ -483,8 +483,11 @@ def aruco_init():
 	config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
 	profile = pipe.start(config)
 	cameraMatrix = np.load('mtx.npy')
+	color_profile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
+	color_intrinsics = color_profile.get_intrinsics()
 	depth_profile = rs.video_stream_profile(profile.get_stream(rs.stream.depth))
 	depth_intrinsics = depth_profile.get_intrinsics()
+	print(color_intrinsics)
 	distCoeffs = np.load('dist.npy')
 	find_wheel_chair = 0
 def process_data(ids,rotation_mat):
@@ -496,7 +499,7 @@ def process_data(ids,rotation_mat):
 
 	#send_data.double6dArr[10]=rotation_mat(0, 1)
 def aruco_fun():
-	global pipe, cameraMatrix, distCoeffs
+	global pipe, cameraMatrix, distCoeffs, depth_intrinsics
 	axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
 	if True:
 		
@@ -525,11 +528,11 @@ def aruco_fun():
 
 				if ids[id_obj] == 6:
 					find_wheel_chair = 1
-					wheel_chair_translation_vectors = get_xyz(corners[id_obj], depth_img,cameraMatrix)
+					wheel_chair_translation_vectors = get_xyz(corners[id_obj], depth_img,cameraMatrix,depth_intrinsics)
 				elif ids[id_obj]!=6:
 					if find_wheel_chair == 0:
 						continue
-					obj_translation_vectors = get_xyz(corners[id_obj], depth_img,cameraMatrix)
+					obj_translation_vectors = get_xyz(corners[id_obj], depth_img,cameraMatrix,depth_intrinsics)
 					p = obj_translation_vectors - wheel_chair_translation_vectors
 					print(ids[id_obj]," ","postion vetor is",p)
 					#process_data(ids[id_obj],p)
@@ -588,6 +591,7 @@ def aruco_fun():
 					w2o = w2c.dot(c2o)
 					#p = w2o[:,3][:3]
 					p = compute_w2o(wheel_chair_rotation_vectors,wheel_chair_translation_vectors,obj_rotation_vectors,obj_translation_vectors)
+					
 					print(ids[id_obj]," ","postion vetor is",p)
 					#process_data(ids[id_obj],p)
 				
