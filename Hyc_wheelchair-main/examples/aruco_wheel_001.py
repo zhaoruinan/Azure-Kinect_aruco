@@ -13,6 +13,7 @@ from bledevice import scanble, BLEDevice
 import socket
 import struct
 import random
+from compute_w2o import compute_w2o,center_p
 from datetime import datetime
 from ctypes import *
 SIZE_DATA_TCP_MAX  = 200
@@ -504,9 +505,33 @@ def process_data(ids,rotation_mat):
 def aruco_fun():
 	global pipe, cameraMatrix, distCoeffs
 	axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
+	if False:
+		
+		frames = pipe.wait_for_frames()
+		align_to = rs.stream.color
+		align = rs.align(align_to)
+		aligned_frames = align.process(frames)
+		depth_frame = aligned_frames.get_depth_frame()
+		color_frame = aligned_frames.get_color_frame()
+		color_img = np.array(color_frame.get_data())
+		color_img_temp = copy.deepcopy(color_img)
+		depth_img = np.array(depth_frame.get_data())
+		frame = color_img_temp 
+		gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+		aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
+		parameters =  aruco.DetectorParameters_create()
+		corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
+		print(corners,ids)
+		center_p(corners, depth_img)
+		gray = aruco.drawDetectedMarkers(gray, corners)
+		cv2.imshow('frame',gray)
+		if cv2.waitKey(1) & 0xFF == ord('q'):
+			cv2.destroyAllWindows()
+			#break
 	if True:
 	#while(True):
 		frames = pipe.wait_for_frames()
+		
 		color_frame = frames.get_color_frame()
 		# Convert images to numpy arrays
 		color_image = np.asanyarray(color_frame.get_data())
@@ -551,7 +576,8 @@ def aruco_fun():
 					temp = np.array([0,0,0,1])
 					c2o = np.r_[c2o, [temp]]					
 					w2o = w2c.dot(c2o)
-					p = w2o[:,3][:3]
+					#p = w2o[:,3][:3]
+					p = compute_w2o(wheel_chair_rotation_vectors,wheel_chair_translation_vectors,obj_rotation_vectors,obj_translation_vectors)
 					print(ids[id_obj]," ","postion vetor is",p)
 					#process_data(ids[id_obj],p)
 				
