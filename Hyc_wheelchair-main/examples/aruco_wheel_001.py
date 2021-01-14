@@ -13,7 +13,7 @@ from bledevice import scanble, BLEDevice
 import socket
 import struct
 import random
-from compute_w2o import compute_w2o,center_p
+from compute_w2o import compute_w2o,center_p,get_xyz
 from datetime import datetime
 from ctypes import *
 SIZE_DATA_TCP_MAX  = 200
@@ -366,15 +366,6 @@ keyboard.add_hotkey('space', M_STOP)
 
 
 
-def center_p(conners,depth_img):
-	for conner in conners:
-		for conner_p in conner:
-			x,y = int(np.mean(conner_p[:,0])),int(np.mean(conner_p[:,1]))
-			print(x,y)
-			print(depth_img[y,x])
-
-			#print(np.mean(conner[,0]))
-
 def tcp_init():
 	global client, send_data
 	client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -505,7 +496,7 @@ def process_data(ids,rotation_mat):
 def aruco_fun():
 	global pipe, cameraMatrix, distCoeffs
 	axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
-	if False:
+	if True:
 		
 		frames = pipe.wait_for_frames()
 		align_to = rs.stream.color
@@ -521,14 +512,31 @@ def aruco_fun():
 		aruco_dict = aruco.Dictionary_get(aruco.DICT_6X6_250)
 		parameters =  aruco.DetectorParameters_create()
 		corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
-		print(corners,ids)
-		center_p(corners, depth_img)
+		#print(corners,ids)
+		#center_p(corners, depth_img,cameraMatrix)
+		#if False:
+		if ids is not None and len(ids) > 0:
+			global wheel_chair_translation_vectors, find_wheel_chair
+			#print("len",len(ids[0]))
+			num = int(len(ids))
+			for id_obj in range(num):
+
+				if ids[id_obj] == 6:
+					find_wheel_chair = 1
+					wheel_chair_translation_vectors = get_xyz(corners[id_obj], depth_img,cameraMatrix)
+				elif ids[id_obj]!=6:
+					if find_wheel_chair == 0:
+						continue
+					obj_translation_vectors = get_xyz(corners[id_obj], depth_img,cameraMatrix)
+					p = obj_translation_vectors - wheel_chair_translation_vectors
+					print(ids[id_obj]," ","postion vetor is",p)
+					#process_data(ids[id_obj],p)
 		gray = aruco.drawDetectedMarkers(gray, corners)
 		cv2.imshow('frame',gray)
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			cv2.destroyAllWindows()
 			#break
-	if True:
+	if False:
 	#while(True):
 		frames = pipe.wait_for_frames()
 		
@@ -551,7 +559,7 @@ def aruco_fun():
 		if ids is not None and len(ids) > 0:
 			# Estimate the posture per each Aruco marker
 			rotation_vectors, translation_vectors, _objPoints = aruco.estimatePoseSingleMarkers(corners, 1, cameraMatrix, distCoeffs)
-			global wheel_chair_rotation_vectors,  wheel_chair_translation_vectors, find_wheel_chair ,w2c
+			#global wheel_chair_rotation_vectors,  wheel_chair_translation_vectors, find_wheel_chair ,w2c
 			print("len",len(ids[0]))
 			num = int(len(ids))
 			for id_obj in range(num):
@@ -614,9 +622,9 @@ class RepeatingTimer(Timer):
 			self.finished.wait(self.interval)
 def main():
 
-	tcp_init()
-	t_tcp = RepeatingTimer(0.03, tcp_com)
-	t_tcp.start()
+	#tcp_init()
+	#t_tcp = RepeatingTimer(0.03, tcp_com)
+	#t_tcp.start()
 
 	aruco_init()
 	#wheel_com_init()
